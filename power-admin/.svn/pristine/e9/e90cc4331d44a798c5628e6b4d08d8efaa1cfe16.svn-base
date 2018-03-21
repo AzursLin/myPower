@@ -1,0 +1,215 @@
+<template>
+  <section>
+  <el-row>
+    <el-col :span="24" class="toolbar">
+      <el-form :inline="true" :model="setForm" class="demo-form-inline">
+<!--        <el-form-item>
+          <el-input v-model="nickName" placeholder="请输入用户名" v-bind:style="{ width: 150 + 'px' }"></el-input>
+        </el-form-item>
+        <el-form-item>
+          或</el-form-item>
+        <el-form-item>
+          <el-input v-model="name" placeholder="请输入真实姓名、手机号或会员号" v-bind:style="{ width: 250 + 'px' }"></el-input>
+        </el-form-item>-->
+          <el-form-item>
+          <el-select v-model="searhSelectValue" placeholder="请选择" v-bind:style="{ width: 100 + 'px' }">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+          </el-form-item>
+        <el-form-item>
+          时间段:
+        </el-form-item>
+        <el-form-item>
+          <el-date-picker
+            v-model="startDate"
+            type="date"
+            placeholder="选择开始日期"
+            v-bind:style="{ width: 180 + 'px' }">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item>
+        至</el-form-item>
+        <el-form-item>
+          <el-date-picker
+            v-model="endDate"
+            type="date"
+            placeholder="选择结束日期"
+            v-bind:style="{ width: 180 + 'px' }">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item>
+        <el-button type="primary" @click="searhBt">查询</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+  </el-row>
+    <el-row>
+      <el-col :span="24">
+        <el-table
+          ref="singleTable"
+          :data="tableData"
+          style="width: 100%"    >
+          <el-table-column type="index" width="40">
+          </el-table-column>
+          <el-table-column property="deviceType" label="设备类型" >
+          </el-table-column>
+          <el-table-column property="blueNumberCount" label="设备数量（台）" align="right" >
+          </el-table-column>
+          <el-table-column property="activeUser" label="活跃用户（人）" align="right" >
+          </el-table-column>
+          <el-table-column property="blueUseTotalCount" label="总使用量（次）" align="right" >
+          </el-table-column>
+          <el-table-column property="blueMonthCount" label="本月用量（次）" align="right">
+          </el-table-column>
+          <el-table-column property="blueTodayCount" label="今日用量（次）" align="right">
+          </el-table-column>
+        </el-table>
+      </el-col>
+    </el-row>
+  </section>
+</template>
+
+<script>
+  import { deviceStatis,picBaseurl } from '../api/api';
+export default {
+  name: 'hello',
+  data () {
+    return {
+      options: [{
+        value: '',
+        label: '全部'
+      }, {
+        value: '动感单车',
+        label: '动感单车'
+      }, {
+        value: '健身车',
+        label: '健身车'
+      }, {
+        value: '划船机',
+        label: '划船机'
+      }, {
+        value: '跑步机',
+        label: '跑步机'
+      }],
+      tableData:[],
+      setForm:{
+/*        clubId:'',
+        clubName:'',
+        clubLogo:'',
+        clubCode:'',
+        clubLatitude:'',
+        clubLongitude:'',
+        clubLocation:'',
+        clubSummary:'',
+        mode:''*/
+      },
+      uploadURL:picBaseurl+"cmsClub!uploadPic.action?appPhaseII=Club",
+      uploadData:{"employeeId":JSON.parse(sessionStorage.getItem('employeeId'))},
+      nickName:'',
+      name:'',
+      startDate:'',
+      endDate:'',
+      searhSelectValue:'',
+      pageNum:1,
+      pageSize:8,
+      total:0
+    }
+    },
+    methods: {
+      searhBt(){
+        let para = {
+          pageNum: 1,
+          pageSize: this.pageSize,
+          startDate:this.formatDate(this.startDate),
+          endDate:this.formatDate(this.endDate),
+          gymId:JSON.parse(sessionStorage.getItem('gymId')),
+          deviceType:this.searhSelectValue
+        };
+        this.getPage(para);
+      },
+      getPage(param) {
+        deviceStatis(param).then((res) => {
+          if(res.data.result === 'success') {
+            this.tableData = res.data.msg;
+          } else if(res.data.result === 'false'){
+            this.$message({
+              message: res.data.msg,
+              type: 'error'
+            });
+          }
+        });
+      },
+      formatDate(date){
+        var formatValue;
+        if (date === '') {
+          formatValue = "";
+        } else {
+          formatValue = (date.getYear()+1900)
+            + "-" + dataLeftCompleting(date.getMonth() + 1)
+            + "-" + dataLeftCompleting(date.getDate())
+        }
+        return formatValue;
+      },
+  },
+  mounted() {
+    let para = {
+      pageNum:1,
+      pageSize:8,
+      gymId:JSON.parse(sessionStorage.getItem('gymId')),
+      startDate:'',
+      endDate:'',
+      deviceType:''
+    };
+    deviceStatis(para).then((res) => {
+      if(res.data.result === 'success') {
+        this.tableData = res.data.msg;
+        this.tableData.userLogo = picBaseurl+this.tableData.userLogo;
+        this.total = res.data.total;
+      } else if(res.data.result === 'false'){
+        this.$message({
+          message: res.data.msg,
+          type: 'error'
+        });
+      }
+    });
+  }
+}
+
+  function dataLeftCompleting(value){
+    return parseInt(value) < 10 ? "0" + value : value;
+  }
+
+  function isEmptyObject(obj) {
+    for (var i in obj) {
+      return false
+    }
+    return true
+  }
+</script>
+
+<style>
+
+  .el-upload-list--picture-card .el-upload-list__item  {
+    width: 90px;
+    height: 90px;
+  }
+  .el-upload el-upload--picture-card {
+    font-size: 28px;
+    color: #8c939d;
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+    text-align: center;
+  }
+  .el-upload--picture-card {
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+  }
+</style>
+

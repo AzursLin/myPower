@@ -1,0 +1,321 @@
+<template>
+  <section>
+  <el-row>
+    <el-col :span="3">
+      <img  :src="setClubForm.clubLogo" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+    </el-col>
+    <el-col :span="10">
+      <span v-bind:style="{ fontSize:20+'px'}">
+        {{setClubForm.clubName}}
+      </span> <el-button type="primary" @click="changeClub">修改信息</el-button><br><br>
+      <span v-bind:style="{ fontSize:18+'px'}">
+      经纬度:{{setClubForm.clubLatitude}}<br><br>
+    </span>
+      <span v-bind:style="{ fontSize:18+'px'}">
+      地址:{{setClubForm.clubLocation}}
+    </span>
+    </el-col>
+    <el-col :span="10">
+      <img  :src="this.setClubForm.clubCode" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <a href="/club-admin/#/MyClub" @click="this.downloadPic">下载二维码</a>
+    </el-col>
+  </el-row><br><br>
+  <el-row>
+    <el-col :span="1"></el-col>
+    <el-col :span="17" v-bind:style="{ fontSize:12+'px'}" >
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{setClubForm.clubSummary}}
+    </el-col>
+  </el-row><br><br>
+  <el-row>
+    <el-col :span="10">相册:<br><br>
+      <img v-if="picUrlList[0]"  :src="picUrlList[0]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[1]" :src="picUrlList[1]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[2]" :src="picUrlList[2]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/><br>
+      <img v-if="picUrlList[3]" :src="picUrlList[3]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[4]" :src="picUrlList[4]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[5]" :src="picUrlList[5]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/><br>
+      <img v-if="picUrlList[6]" :src="picUrlList[6]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[7]" :src="picUrlList[7]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+      <img v-if="picUrlList[8]" :src="picUrlList[8]" v-bind:style="{ width: 120+'px',height: 120+'px'}"/><br>
+    </el-col>
+    <el-col :span="14">
+      <div id="main" style="minWidth:400px; height:400px;"></div>
+    </el-col>
+  </el-row>
+
+    <el-dialog
+      title="课程信息"
+      :visible.sync="changeClubDialog"
+      size="small"
+      :before-close="page">
+      <el-form ref="setCourseForm" :model="setClubForm" label-width="80px">
+        <el-form-item >
+          <el-upload
+            class="avatar-uploader"
+            :action="uploadURL"
+            :show-file-list="false"
+            :data = "uploadData"
+            :on-success	="uploadClubPicSuccess">
+            <img  v-if="setClubForm.clubLogo" :src="setClubForm.clubLogo" v-bind:style="{ width: 100+'px',height: 100+'px'}"/>
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="俱乐部名称:" style="width: 80%;">
+          <el-input v-model="setClubForm.clubName"></el-input>
+        </el-form-item>
+        <el-form-item label="经纬度:" style="width: 50%;">
+          <el-input v-model="setClubForm.clubLatitude"></el-input>
+        </el-form-item>
+        <el-form-item label="地址:" style="width: 100%;">
+          <el-input v-model="setClubForm.clubLocation"></el-input>
+        </el-form-item>
+        <el-form-item label="介绍">
+          <el-input type="textarea" v-model="setClubForm.clubSummary" :autosize="{ minRows: 2, maxRows: 4}"></el-input>
+        </el-form-item>
+        <el-form-item label-width="0px">
+          <el-upload
+            class="avatar-uploader2"
+            :action="uploadURL"
+            list-type="picture-card"
+            :data = "uploadData"
+            :on-success="uploadClubShowImageSuccess"
+            :file-list="fileList"
+            :on-remove="uploadClubShowImageRemove"
+            :before-upload="beforeClubShowImageUpload">
+            <i class="el-icon-plus"></i>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label-width="40%">
+          <el-button type="primary" @click="setClub">确认</el-button>
+          <el-button @click="page">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+  </section>
+</template>
+
+<script>
+  import { getClubUser,operateClub,picBaseurl } from '../api/api';
+
+/*  import echarts from 'echarts';*/
+  export default {
+  name: 'hello',
+  data () {
+    return {
+      options: [{
+        value: '选项1',
+        label: '黄金糕'
+      }, {
+        value: '选项2',
+        label: '双皮奶'
+      }, {
+        value: '选项3',
+        label: '蚵仔煎'
+      }, {
+        value: '选项4',
+        label: '龙须面'
+      }, {
+        value: '选项5',
+        label: '北京烤鸭'
+      }],
+      tableData:[],
+      setClubForm:{
+/*        clubId:'',
+        clubName:'',
+        clubLogo:'',
+        clubCode:'',
+        clubLatitude:'',
+        clubLongitude:'',
+        clubLocation:'',
+        clubSummary:'',
+        mode:''*/
+      },
+      uploadURL:picBaseurl+"cmsClub!uploadPic.action?appPhaseII=Club",
+      uploadData:{"employeeId":JSON.parse(sessionStorage.getItem('employeeId'))},
+      picUrlList:[],
+      changeClubDialog:false,
+      fileList:[],
+      clubUserCount:[],
+      chart: null
+    }
+    },
+    methods: {
+      changeClub(){
+        this.changeClubDialog = true;
+      },
+      uploadClubPicSuccess(res, file){
+        this.setClubForm.clubLogo =  picBaseurl+res.msg[0];
+        file.url = this.setClubForm.clubLogo;
+      },
+      uploadClubShowImageSuccess(res, file,fileList){
+        file.url = picBaseurl+res.msg[0];
+        this.fileList = fileList;
+      },
+      beforeClubShowImageUpload(file){
+        if(this.fileList.length === 9) {
+          this.$message({
+            message: "上传图片不能超过9张",
+            type: 'error'
+          });
+          return false;
+        }
+      },
+      uploadClubShowImageRemove(file, fileList){
+        this.fileList = fileList;
+      },
+      page(){
+        window.location.reload();
+      },
+      setClub(){
+        this.setClubForm.clubImage = '';
+        for (var i = 0; i < this.fileList.length; i++) {
+          this.setClubForm.clubImage += ","+this.fileList[i].url;
+        };
+        var lalo = this.setClubForm.clubLatitude.split(',');
+        this.setClubForm.clubLatitude = lalo[0];
+        this.setClubForm.clubLongitude = lalo[1];
+        this.setClubForm.mode = "1";
+        operateClub(this.setClubForm).then((res) => {
+          if(res.data.ret === 200) {
+            this.$message({
+              message: res.data.msg[0],
+              type: 'info'
+            });
+            this.changeClubDialog = false;
+            this.page();
+          } else if(res.data.ret === 500){
+            this.$message({
+              message: res.data.msg[0],
+              type: 'error'
+            });
+          }
+        });
+      },
+      downloadPic() {
+          //window.open(previewData[imgIndex].path,null);
+          var $a = document.createElement('a');
+          $a.setAttribute("href", this.setClubForm.clubCode);
+          $a.setAttribute("download", "");
+
+          var evObj = document.createEvent('MouseEvents');
+          evObj.initMouseEvent( 'click', true, true, window, 0, 0, 0, 0, 0, false, false, true, false, 0, null);
+          $a.dispatchEvent(evObj);
+      },
+      // 绘图
+      drawGraph(id) {
+        var echarts = require('echarts/lib/echarts');
+        require('echarts/lib/chart/pie');
+        require('echarts/lib/component/tooltip');
+        require('echarts/lib/component/title');
+        require('echarts/lib/component/legend');
+        this.chart = echarts.init(document.getElementById(id));
+/*        this.chart.showLoading();*/
+        let para = {
+          mode:'2'
+        };
+        operateClub(para).then((res) => {
+          if(res.data.ret === 200) {
+            this.clubUserCount = res.data.msg;
+            var str1 = '教练:'+this.clubUserCount[0]+'人';
+            this.chart.setOption({
+              title: {
+                text: '总人数：'+this.clubUserCount[0],
+                x:'center'
+              },
+              tooltip: {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+              },
+              legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: ['教练','会员','成员']
+              },
+              series : [
+                {
+                  name: '俱乐部',
+                  type: 'pie',
+                  radius: '55%',
+                  data: [
+                    { value: this.clubUserCount[1], name: '教练'},
+                    { value: this.clubUserCount[2], name: '会员' },
+                    { value: this.clubUserCount[3], name: '成员' },
+                  ],
+                  itemStyle: {
+                    normal: {
+                      label: {
+                        show: true,
+                        formatter: '{b} : {c}人 \n ({d}%)'
+                      },
+                      labelLine: {
+                        show: true
+                      }
+                    }
+                  }
+                }
+              ]
+            });
+          } else if(res.data.ret === 500){
+            this.$message({
+              message: res.data.msg[0],
+              type: 'error'
+            });
+          }
+        });
+
+      }
+      },
+  mounted() {
+    let para = {
+      mode:'0'
+    };
+    operateClub(para).then((res) => {
+      if(res.data.ret === 200) {
+        this.setClubForm = res.data.msg[0];
+        this.setClubForm.clubCode = picBaseurl+this.setClubForm.clubCode;
+        this.setClubForm.clubLogo = picBaseurl+this.setClubForm.clubLogo;
+        this.picUrlList = this.setClubForm.clubImage.split(',');
+        for (var x in this.picUrlList) {
+          if(this.picUrlList[x] !== '') {
+            this.picUrlList[x] = picBaseurl+this.picUrlList[x];
+            this.fileList.push({name:x,url:this.picUrlList[x]});
+          }
+        }
+        this.setClubForm.clubLatitude = this.setClubForm.clubLatitude +','+this.setClubForm.clubLongitude
+      } else if(res.data.ret === 500){
+        this.$message({
+          message: res.data.msg[0],
+          type: 'error'
+        });
+      }
+    });
+    this.$nextTick(function() {
+      this.drawGraph('main');
+    });
+  }
+}
+
+</script>
+
+<style>
+
+  .el-upload-list--picture-card .el-upload-list__item  {
+    width: 90px;
+    height: 90px;
+  }
+  .el-upload el-upload--picture-card {
+    font-size: 28px;
+    color: #8c939d;
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+    text-align: center;
+  }
+  .el-upload--picture-card {
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+  }
+</style>
+

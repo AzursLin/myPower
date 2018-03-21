@@ -1,0 +1,46 @@
+import axios from 'axios';
+
+//let base = '';
+export const  picBaseurl = 'http://localhost/vrbicycle/';
+export let  baseurl = 'http://localhost/';
+/*export const  picBaseurl = 'http://www.gzdaxun.com/vrbicycle/';
+export let  baseurl = 'http://www.gzdaxun.com/'*/;
+//let base = 'http://14.17.121.143:8445';
+
+//export const requestLogin = params => { return axios.post(`${base}/login`, params).then(res => res.data); };
+export const requestLogin = params => { return axios.post(`${baseurl}/vrbicycle/cmsClub!Login.action?appPhaseII=Club`, params).then(res => res.data); };
+
+//export const getUserList = params => { return axios.get(`${base}/user/list`, { params: params }); };
+export const getClubUser = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!getClubUser.action?appPhaseII=Club`, { params: params }); };
+
+export const kickClubUser = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!doKickClubUser.action?appPhaseII=Club`, { params: params }); };
+
+export const setMemberInfo = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!setMemberInfo.action?appPhaseII=Club`, { params: params }); };
+
+export const getExcelDown = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!downloadExcel.action?appPhaseII=Club`, { params: params }); };
+
+export const getClubReview = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!getCMSClubReview.action?appPhaseII=Club`, { params: params }); };
+
+export const setClubReview = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!setCMSClubReview.action?appPhaseII=Club`, { params: params }); };
+
+export const getClubCourse = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!getCMSClubCourse.action?appPhaseII=Club`, { params: params }); };
+
+export const setClubCourse = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!setCMSClubCourse.action?appPhaseII=Club`, { params: params }); };
+
+export const getClubActivity = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!getCMSClubActivity.action?appPhaseII=Club`, { params: params }); };
+
+export const setClubActivity = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!setCMSClubActivity.action?appPhaseII=Club`, { params: params }); };
+
+export const operateClub = params => { return axios.get(`${baseurl}/vrbicycle/cmsClub!operateClubForCMS.action?appPhaseII=Club`, { params: params }); };
+
+export const sportsRecord = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!sportsRecord.action?app=api`, { params: params }); };
+
+export const deviceStatis = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!deviceStatis.action?app=api`, { params: params }); };
+
+export const deviceManage = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!deviceManage.action?app=api`, { params: params }); };
+
+export const deviceModify = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!deviceModify.action?app=api`, { params: params }); };
+
+export const dynamicManage = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!dynamicManage.action?app=api`, { params: params }); };
+
+export const dynamicDelete = params => { return axios.get(`${baseurl}/vrbicycle/clubManage!dynamicDelete.action?app=api`, { params: params }); };

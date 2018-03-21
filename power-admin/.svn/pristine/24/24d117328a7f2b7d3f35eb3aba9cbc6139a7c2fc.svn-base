@@ -1,0 +1,84 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import Login from '@/components/Login'
+import MyClub from '@/components/MyClub'
+import ClubUser from '@/components/ClubUser'
+import ClubReview from '@/components/ClubReview'
+import ClubCourse from '@/components/ClubCourse'
+import SportsRecord from '@/components/SportsRecord'
+import ClubActivity from '@/components/ClubActivity'
+import DeviceStatis from '@/components/DeviceStatis'
+import DeviceManage from '@/components/DeviceManage'
+import DynamicManage from '@/components/DynamicManage'
+import TvRanking from '@/components/TvRanking'
+import Navigation from '@/components/Navigation'
+
+Vue.use(Router)
+
+export default new Router({
+  routes: [
+    {
+      path: '/',
+      name: '',
+      component: Login,
+      hidden: true
+    },
+    {
+      path:'/index',
+      name:'俱乐部管理',
+      component:Navigation,
+      children:[
+        {
+          path:'/MyClub',
+          name:'总览',
+          component:MyClub,
+        },
+        {
+          path:'/SportsRecord',
+          name:'运动记录',
+          component:SportsRecord,
+        },
+        {
+          path:'/ClubUser',
+          name:'会员管理',
+          component:ClubUser,
+        },
+        {
+          path:'/ClubReview',
+          name:'消息管理',
+          component:ClubReview,
+        },
+        {
+          path:'/DeviceStatis',
+          name:'设备统计',
+          component:DeviceStatis,
+        },
+        {
+          path:'/DeviceManage',
+          name:'设备管理',
+          component:DeviceManage,
+        },
+        {
+          path:'/TvRanking',
+          name:'运动排行榜',
+          component:TvRanking,
+        },
+        {
+          path:'/DynamicManage',
+          name:'动态管理',
+          component:DynamicManage,
+        },
+        {
+          path:'/ClubCourse',
+          name:'课程管理',
+          component:ClubCourse,
+        },
+        {
+          path:'/ClubActivity',
+          name:'活动管理',
+          component:ClubActivity,
+        }
+      ]
+    }
+  ]
+})

@@ -1,0 +1,393 @@
+<template>
+  <section>
+  <el-row>
+    <el-col :span="24" class="toolbar">
+      <el-form :inline="true" :model="setForm" class="demo-form-inline">
+        <el-form-item>
+          时间段
+        </el-form-item>
+        <el-form-item>
+          <el-date-picker
+            v-model="startDate"
+            type="date"
+            placeholder="选择开始日期"
+            v-bind:style="{ width: 180 + 'px' }">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item>
+          至</el-form-item>
+        <el-form-item>
+          <el-date-picker
+            v-model="endDate"
+            type="date"
+            placeholder="选择结束日期"
+            v-bind:style="{ width: 180 + 'px' }">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item>
+          &nbsp;&nbsp;
+        </el-form-item>
+        <el-form-item>
+          筛选:
+        </el-form-item>
+        <el-form-item>
+          <el-select v-model="searhSelectValue" placeholder="请选择" v-bind:style="{ width: 100 + 'px' }">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+        <el-button type="primary" @click="searhBt">查询</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+  </el-row>
+    <el-row>
+      <el-col :span="24">
+        <el-table
+          ref="singleTable"
+          :data="tableData"
+          style="width: 100%"    >
+          <el-table-column type="index" width="40">
+          </el-table-column>
+          <el-table-column property="publishedTime" label="发布时间" :formatter="publishedTimeFormatter">
+          </el-table-column>
+          <el-table-column property="userNickName" label="用户" width="80" >
+          </el-table-column>
+          <el-table-column property="clubRole" label="身份" width="80" :formatter="clubRoleFormatter" >
+          </el-table-column>
+          <el-table-column property="messageContent" label="内容" >
+          </el-table-column>
+          <el-table-column  label="设置">
+            <template scope="scope">
+              <el-button
+                @click.native.prevent="OpenChangeDialog(scope.$index, '1')"
+                type="text"
+                size="small">
+                查看详情
+              </el-button>
+              <el-button
+                @click.native.prevent="OpenChangeDialog(scope.$index, '2')"
+                type="text"
+                size="small">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-col>
+      <el-col :span="24" class="toolbar">
+        <el-pagination layout="prev, pager, next" @current-change="pageChange" :current-page.sync="pageNum"
+                       :page-size=pageSize :total="total" style="float:right;">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      title="动态信息"
+      :visible.sync="changeDialog"
+      size="small">
+      <el-row>
+        <el-col :span="12" >
+          用      户: {{setForm.userNickName}}
+        </el-col>
+        <el-col :span="12" >
+          身      份:
+          <span v-if="setForm.clubRole === '0'">管理员</span>
+          <span v-if="setForm.clubRole === '1'">教练</span>
+          <span v-if="setForm.clubRole === '10'">会员</span>
+          <span v-if="setForm.clubRole === '11'">成员</span>
+        </el-col>
+      </el-row>
+      <el-row> &nbsp;
+      </el-row>
+      <el-row>
+        <el-col :span="12" >
+        发布时间：{{setForm.tmpPublishedTime}}
+        </el-col>
+      </el-row>
+      <el-row> &nbsp;
+      </el-row>
+      <el-row>
+        <el-col :span="24" >
+          内      容：<br>&nbsp;&nbsp;&nbsp;&nbsp;{{setForm.messageContent}}
+        </el-col>
+      </el-row>
+      <el-row> &nbsp;
+      </el-row>
+      <el-row>
+        <el-col :span="24" >
+          图      片：<br>
+          <img v-if="setForm.messagePicOne" :src="setForm.messagePicOne" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicTwo" :src="setForm.messagePicTwo" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicThree" :src="setForm.messagePicThree" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicFour" :src="setForm.messagePicFour" v-bind:style="{ width: 120+'px',height: 120+'px'}"/><br>
+          <img v-if="setForm.messagePicFive" :src="setForm.messagePicFive" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicSix" :src="setForm.messagePicSix" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicSeven" :src="setForm.messagePicSeven" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+          <img v-if="setForm.messagePicEight" :src="setForm.messagePicEight" v-bind:style="{ width: 120+'px',height: 120+'px'}"/>
+        </el-col>
+      </el-row>
+      <el-row> &nbsp;
+      </el-row>
+      <el-row>
+        <el-col :span="10" >&nbsp;
+        </el-col>
+        <el-col :span="4" >
+          <el-button size="large" @click="changeDialog = false" >
+            <span>确认</span>
+          </el-button>
+        </el-col>
+      </el-row>
+    </el-dialog>
+  </section>
+</template>
+
+<script>
+  import { dynamicManage,dynamicDelete,picBaseurl } from '../api/api';
+export default {
+  components: {  },
+  name: 'hello',
+  data () {
+    return {
+      options: [{
+        value: '',
+        label: '全部'
+      }, {
+        value: '0',
+        label: '管理员'
+      }, {
+        value: '1',
+        label: '教练'
+      }, {
+        value: '10',
+        label: '会员'
+      }, {
+        value: '11',
+        label: '成员'
+      }],
+      tableData:[],
+      setForm:[],
+      uploadURL:picBaseurl+"cmsClub!uploadPic.action?appPhaseII=Club",
+      uploadData:{"employeeId":JSON.parse(sessionStorage.getItem('employeeId'))},
+      nickName:'',
+      name:'',
+      startDate:'',
+      endDate:'',
+      searhSelectValue:'',
+      bluetoothName:'',
+      changeDialog:false,
+      picUrlList:[],
+      pageNum:1,
+      pageSize:8,
+      total:0
+    }
+    },
+    methods: {
+      searhBt(){
+          this.pageNum =1;
+        let para = {
+          pageNum: 1,
+          pageSize: this.pageSize,
+          clubId:JSON.parse(sessionStorage.getItem('clubId')),
+          role:this.searhSelectValue,
+          startDate:this.formatDate(this.startDate),
+          endDate:this.formatDate(this.endDate)
+        };
+        this.getPage(para);
+      },
+      pageChange(val) {
+        this.pageNum = val;
+        let para = {
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          clubId:JSON.parse(sessionStorage.getItem('clubId')),
+          role:this.searhSelectValue,
+          startDate:this.formatDate(this.startDate),
+          endDate:this.formatDate(this.endDate)
+        };
+        this.getPage(para);
+      },
+      getPage(param) {
+        dynamicManage(param).then((res) => {
+          if(res.data.result === 'success') {
+            this.tableData = res.data.msg;
+            this.total = res.data.total;
+          } else if(res.data.result === 'false'){
+            this.$message({
+              message: res.data.msg,
+              type: 'error'
+            });
+          }
+        });
+      },
+      blueMonthCountFormatter(row, column) {
+          var displayStr = '到期';
+        var addMonth = parseInt(row.bluetoothWarrantyTime);
+        var dependedVal = row.bluetoothPurchaseDate;
+        var regEx = new RegExp("\\-","gi");
+        dependedVal=dependedVal.replace(regEx,"/");
+        var milliseconds=new Date(dependedVal);
+        var nowDate = new Date();
+        milliseconds.setMonth(milliseconds.getMonth()+addMonth);
+        if(nowDate.getTime() < milliseconds.getTime()) {
+          displayStr = '未到期';
+        }
+        return displayStr;
+      },
+      OpenChangeDialog(index,mode) {
+          if(mode === '1') {
+            this.setForm = this.tableData[index];
+            this.setForm.tmpPublishedTime = this.formatGetDate(this.tableData[index].publishedTime);
+
+            this.changeDialog = true;
+          } else if(mode === '2') {
+            this.$confirm('确认删除？')
+              .then(_ => {
+                let para = {
+                  messageId:this.tableData[index].messageId,
+                };
+                dynamicDelete(para).then((res) => {
+                  if(res.data.result === 'success') {
+                    this.pageChange(1);
+                  } else if(res.data.result === 'false'){
+                    this.$message({
+                      message: res.data.msg,
+                      type: 'error'
+                    });
+                  }
+                });
+                done();
+              })
+              .catch(_ => {});
+
+          }
+
+      },
+      formatGetDate(date){
+        var formatValue;
+        if (isEmptyObject(date)) {
+          formatValue = "";
+        } else {
+          formatValue = (date.year+1900)
+            + "-" + dataLeftCompleting(date.month + 1)
+            + "-" + dataLeftCompleting(date.date)
+            + " " + dataLeftCompleting(date.hours)
+            + ":" + dataLeftCompleting(date.minutes)
+            + ":" + dataLeftCompleting(date.seconds);
+        }
+        return formatValue;
+      },
+      formatDate(date){
+        var formatValue;
+        if (date === '') {
+          formatValue = "";
+        } else {
+          formatValue = (date.getYear()+1900)
+            + "-" + dataLeftCompleting(date.getMonth() + 1)
+            + "-" + dataLeftCompleting(date.getDate())
+        }
+
+        return formatValue;
+      },
+      publishedTimeFormatter(row, column) {
+        var date = row.publishedTime;
+        return this.formatGetDate(date);
+      },
+      clubRoleFormatter(row, column) {
+        var role;
+        if(row.clubRole === '0') {
+          role = '管理员'
+        }else if(row.clubRole === '1'){
+          role = '教练'
+        }else if(row.clubRole === '10'){
+          role = '会员'
+        }else if(row.clubRole === '11'){
+          role = '成员'
+        }else {
+          role = ''
+        }
+        return role;
+      },
+  },
+  mounted() {
+    let para = {
+      pageNum:1,
+      pageSize:8,
+      clubId:JSON.parse(sessionStorage.getItem('clubId')),
+    };
+    dynamicManage(para).then((res) => {
+      if(res.data.result === 'success') {
+        this.tableData = res.data.msg;
+        this.total = res.data.total;
+        for(var index in this.tableData) {
+          if(this.tableData[index].messagePicOne !== ''){
+            this.tableData[index].messagePicOne = picBaseurl+this.tableData[index].messagePicOne;
+          }
+          if(this.tableData[index].messagePicTwo !== ''){
+            this.tableData[index].messagePicTwo = picBaseurl+this.tableData[index].messagePicTwo;
+          }
+          if(this.tableData[index].messagePicThree !== ''){
+            this.tableData[index].messagePicThree = picBaseurl+this.tableData[index].messagePicThree;
+          }
+          if(this.tableData[index].messagePicFour !== ''){
+            this.tableData[index].messagePicFour = picBaseurl+this.tableData[index].messagePicFour;
+          }
+          if(this.tableData[index].messagePicFive !== ''){
+            this.tableData[index].messagePicFive = picBaseurl+this.tableData[index].messagePicFive;
+          }
+          if(this.tableData[index].messagePicSix !== ''){
+            this.tableData[index].messagePicSix = picBaseurl+this.tableData[index].messagePicSix;
+          }
+          if(this.tableData[index].messagePicSeven !== ''){
+            this.tableData[index].messagePicSeven = picBaseurl+this.tableData[index].messagePicSeven;
+          }
+          if(this.tableData[index].messagePicEight !== ''){
+            this.tableData[index].messagePicEight = picBaseurl+this.tableData[index].messagePicEight;
+          }
+        }
+      } else if(res.data.result === 'false'){
+        this.$message({
+          message: res.data.msg,
+          type: 'error'
+        });
+      }
+    });
+  }
+}
+
+  function dataLeftCompleting(value){
+    return parseInt(value) < 10 ? "0" + value : value;
+  }
+  function isEmptyObject(obj) {
+    for (var i in obj) {
+      return false
+    }
+    return true
+  }
+</script>
+
+<style>
+
+  .el-upload-list--picture-card .el-upload-list__item  {
+    width: 90px;
+    height: 90px;
+  }
+  .el-upload el-upload--picture-card {
+    font-size: 28px;
+    color: #8c939d;
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+    text-align: center;
+  }
+  .el-upload--picture-card {
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+  }
+</style>
+

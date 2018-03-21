@@ -1,0 +1,262 @@
+<template>
+  <section>
+  <el-row>
+    <el-col :span="24" class="toolbar">
+      <el-form :inline="true" :model="setForm" class="demo-form-inline">
+        <el-form-item>
+          <el-select v-model="searhSelectValue" clearable placeholder="请选择" v-bind:style="{ width: 180 + 'px' }">
+            <el-option v-for="item in typeList" :label="item" :value="item"></el-option>
+          </el-select>
+        </el-form-item>
+          <el-form-item>
+          <!--<el-select v-model="searhSelectValue" placeholder="请选择" v-bind:style="{ width: 100 + 'px' }">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>-->
+          </el-form-item>
+        <el-form-item>
+          设备ID:
+        </el-form-item>
+        <el-form-item>
+          <el-input v-model="bluetoothName" placeholder="请输入设备ID" v-bind:style="{ width: 250 + 'px' }"></el-input>
+        </el-form-item>
+        <el-form-item>
+        <el-button type="primary" @click="searhBt">查询</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+  </el-row>
+    <el-row>
+      <el-col :span="24">
+        <el-table
+          ref="singleTable"
+          :data="tableData"
+          style="width: 100%"    >
+          <el-table-column type="index" width="40">
+          </el-table-column>
+          <el-table-column property="bluetoothName" label="设备ID" >
+          </el-table-column>
+          <el-table-column property="bluetoothDevice" label="设备类型" >
+          </el-table-column>
+          <el-table-column property="bluetoothUsageCount" label="使用次数（次）" align="right" >
+          </el-table-column>
+          <el-table-column property="bluetoothPurchaseDate" label="采购时间" align="right" >
+          </el-table-column>
+          <el-table-column property="bluetoothWarrantyTime" label="保质期（月）" align="right" >
+          </el-table-column>
+          <el-table-column property="blueMonthCount" label="是否到期" align="right" :formatter="blueMonthCountFormatter">
+          </el-table-column>
+          <el-table-column  label="设置">
+            <template scope="scope">
+            <span >
+            <el-button
+          @click.native.prevent="OpenChangeDialog(scope.$index, '1')"
+          type="text"
+          size="small">
+         设置
+        </el-button>
+        </span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-col>
+      <el-col :span="24" class="toolbar">
+        <el-pagination layout="prev, pager, next" @current-change="pageChange" :current-page.sync="pageNum"
+                       :page-size=pageSize :total="total" style="float:right;">
+        </el-pagination>
+      </el-col>
+    </el-row>
+    <el-dialog
+      title="设备信息"
+      :visible.sync="changeDialog"
+      size="tiny">
+      <el-form ref="setForm" :model="setForm" label-width="80px">
+        <el-form-item label="设备ID">
+          <span>{{setForm.bluetoothName}}</span>
+        </el-form-item>
+        <el-form-item label="设备类型">
+          <el-select v-model="setForm.bluetoothDevice" placeholder="请选择活动区域">
+            <el-option v-for="item in typeList" :label="item" :value="item"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+        <el-button size="large" @click="setDevice" >
+          <span>确认</span>
+        </el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+  </section>
+</template>
+
+<script>
+  import { deviceManage,deviceModify,picBaseurl,userMonitor } from '../api/api';
+export default {
+  name: 'hello',
+  data () {
+    return {
+      options: [{
+        value: '',
+        label: '全部'
+      }, {
+        value: '动感单车',
+        label: '动感单车'
+      }, {
+        value: '健身车',
+        label: '健身车'
+      }, {
+        value: '划船机',
+        label: '划船机'
+      }, {
+        value: '跑步机',
+        label: '跑步机'
+      }],
+      tableData:[],
+      typeList: [''],
+      setForm:{
+        bluetoothId:'',
+        bluetoothName:'',
+        bluetoothDevice:'',
+      },
+      uploadURL:picBaseurl+"cmsClub!uploadPic.action?appPhaseII=Club",
+      uploadData:{"employeeId":JSON.parse(sessionStorage.getItem('employeeId'))},
+      nickName:'',
+      name:'',
+      startDate:'',
+      endDate:'',
+      searhSelectValue:'',
+      bluetoothName:'',
+      changeDialog:false,
+      pageNum:1,
+      pageSize:8,
+      total:0
+    }
+    },
+    methods: {
+      searhBt(){
+          this.pageNum = 1;
+        let para = {
+          pageNum: 1,
+          pageSize: this.pageSize,
+          bluetoothName:this.bluetoothName,
+          gymId:JSON.parse(sessionStorage.getItem('gymId')),
+          bluetoothDevice:this.searhSelectValue
+        };
+        this.getPage(para);
+      },
+      pageChange(val) {
+        this.pageNum = val;
+        let para = {
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          bluetoothName:this.bluetoothName,
+          gymId:JSON.parse(sessionStorage.getItem('gymId')),
+          bluetoothDevice:this.searhSelectValue
+        };
+        this.getPage(para);
+      },
+      getPage(param) {
+        deviceManage(param).then((res) => {
+          if(res.data.result === 'success') {
+            this.tableData = res.data.msg;
+            this.total = res.data.total;
+          } else if(res.data.result === 'false'){
+            this.$message({
+              message: res.data.msg,
+              type: 'error'
+            });
+          }
+        });
+      },
+      blueMonthCountFormatter(row, column) {
+          var displayStr = '到期';
+        var addMonth = parseInt(row.bluetoothWarrantyTime);
+        var dependedVal = row.bluetoothPurchaseDate;
+        var regEx = new RegExp("\\-","gi");
+        dependedVal=dependedVal.replace(regEx,"/");
+        var milliseconds=new Date(dependedVal);
+        var nowDate = new Date();
+        milliseconds.setMonth(milliseconds.getMonth()+addMonth);
+        if(nowDate.getTime() < milliseconds.getTime()) {
+          displayStr = '未到期';
+        }
+        return displayStr;
+      },
+      OpenChangeDialog(index,mode) {
+        this.setForm.bluetoothId = this.tableData[index].bluetoothId;
+        this.setForm.bluetoothName = this.tableData[index].bluetoothName;
+        this.setForm.bluetoothDevice = this.tableData[index].bluetoothDevice;
+        this.changeDialog = true;
+      },
+      setDevice(){
+        deviceModify(this.setForm).then((res) => {
+          if(res.data.result === 'success') {
+            this.tableData = res.data.msg;
+            this.$message({
+              message: res.data.msg,
+              type: 'info'
+            });
+            this.changeDialog = false;
+            this.pageChange(this.pageNum);
+          } else if(res.data.result === 'false'){
+            this.$message({
+              message: res.data.msg,
+              type: 'error'
+            });
+          }
+        });
+      }
+  },
+  mounted() {
+    let para = {
+      pageNum:1,
+      pageSize:8,
+      gymId:JSON.parse(sessionStorage.getItem('gymId')),
+    };
+    deviceManage(para).then((res) => {
+      if(res.data.result === 'success') {
+        this.tableData = res.data.msg;
+        this.total = res.data.total;
+      } else if(res.data.result === 'false'){
+        this.$message({
+          message: res.data.msg,
+          type: 'error'
+        });
+      }
+    });
+    let para2 = {
+      userId : JSON.parse(sessionStorage.getItem('employeeId'))
+    };
+    userMonitor(para2).then((res) => {
+      let{areaList,typeList} = res.data.msg;
+      this.typeList = typeList;
+    });
+  }
+}
+</script>
+
+<style>
+
+  .el-upload-list--picture-card .el-upload-list__item  {
+    width: 90px;
+    height: 90px;
+  }
+  .el-upload el-upload--picture-card {
+    font-size: 28px;
+    color: #8c939d;
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+    text-align: center;
+  }
+  .el-upload--picture-card {
+    width: 90px;
+    height: 90px;
+    line-height: 90px;
+  }
+</style>
+

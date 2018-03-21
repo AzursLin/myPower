@@ -1,0 +1,433 @@
+<template>
+  <section>
+      <el-col :span="24" class="toolbar">
+        <el-form :inline="true" :model="formInline" class="demo-form-inline">
+          <span v-bind:style="{ fontSize: 17 + 'px' }">&#32筛选状态：</span>
+            <el-select v-model="review" placeholder="请选择" v-bind:style="{ width: 100 + 'px' }">
+              <el-option
+                v-for="item in reviewOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+            <el-button type="primary" @click="onSubmit">查询</el-button>
+        </el-form-item>
+        </el-form>
+
+      </el-col>
+  <template>
+  <el-table
+    ref="singleTable"
+    :data="tableData"
+    highlight-current-row
+    @current-change="handleCurrentChange"
+    >
+    <el-table-column type="index" width="60">
+    </el-table-column>
+    <el-table-column  label="发布时间"  width="110"  :formatter="createDateFormatter">
+    </el-table-column>
+    </el-table-column>
+    <el-table-column property="activityName" label="活动名称" width="100">
+    </el-table-column>
+    <el-table-column property="isReview" label="报名状态" width="100" :formatter="reviewDateFormatter">
+    </el-table-column>
+    <el-table-column property="authorName" label="发起人" width="100">
+    </el-table-column>
+    <el-table-column property="hasJoinNum" label="报名人数"  width="130">
+    </el-table-column>
+    <el-table-column  label="活动时间"  width="170" :formatter="durationDateFormatter">
+    </el-table-column>
+    <el-table-column  label="设置">
+      <template scope="scope">
+        <span >
+        <el-button v-if="scope.row.isReview === '0'"
+          @click.native.prevent="OpenChangeActivityDialog(scope.$index, '1')"
+          type="text"
+          size="small">
+         审核通过
+        </el-button>
+        <el-button v-if="scope.row.isReview === '1'" type="text" size="small" disabled>已通过</el-button>
+        <el-button v-if="scope.row.isReview === '2'" type="text" size="small" disabled>已驳回</el-button>
+        <el-button
+          @click.native.prevent="OpenChangeActivityDialog(scope.$index, '2')"
+          type="text"
+          size="small">
+          查看
+        </el-button>
+        <el-button v-if="scope.row.isReview === '0'" type="text" size="small"
+                   @click.native.prevent="OpenChangeActivityDialog(scope.$index, '3')">驳回</el-button>
+        <el-button v-else type="text" size="small"
+                   @click.native.prevent="OpenChangeActivityDialog(scope.$index, '4')">删除</el-button>
+        </span>
+    </template>
+    </el-table-column>
+  </el-table>
+  </template>
+  <el-col :span="24" class="toolbar">
+    <el-pagination layout="prev, pager, next" @current-change="pageChange" :current-page.sync="pageNum"
+                   :page-size=pageSize :total="total" style="float:right;">
+    </el-pagination>
+  </el-col>
+
+    <el-dialog
+      title="活动信息"
+      :visible.sync="changeCourseDialog"
+      size="small">
+      <table ><!--border="1"-->
+        <tr>
+          <td><img  v-if="setActivityForm.activityLogo" :src="setActivityForm.activityLogo"
+                    v-bind:style="{ width: 148+'px',height: 148+'px'}"/> </td>
+          <td>活动名称:{{setActivityForm.activityName}} <br/>状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态:
+          <span v-if="reviewDialog === '0'">未审核</span>
+            <span v-if="reviewDialog === '1'">审核通过</span>
+            <span v-if="reviewDialog === '2'">已驳回</span>
+          </td>
+        </tr>
+        <tr>&nbsp;</tr>
+        <tr>
+          <td colspan="2">
+          活动类型:&nbsp;&nbsp;<el-tag color="#409EFF">{{label[0]}}</el-tag>
+          &nbsp;<el-tag color="#409EFF">{{label[1]}}</el-tag>
+          &nbsp;<el-tag color="#409EFF">{{label[2]}}</el-tag>
+          </td>
+        </tr>
+        <tr>&nbsp;</tr>
+        <tr>
+          <td colspan="2">
+            活动时间:&nbsp;&nbsp;{{setActivityForm.activityStartDate}}  至  {{setActivityForm.activityEndDate}}
+          </td>
+        </tr>
+        <tr>&nbsp;</tr>
+        <tr>
+          <td >
+            发&nbsp;起&nbsp;人:&nbsp;&nbsp;{{setActivityForm.authorName}}
+          </td>
+          <td >
+            活动地点:&nbsp;&nbsp;{{setActivityForm.activityLocation}}
+          </td>
+        </tr>
+        <tr>&nbsp;</tr>
+        <tr>
+          <td colspan="2">
+            介&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;绍:<br>&nbsp;&nbsp;&nbsp;&nbsp;{{setActivityForm.activitySummary}}
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <img  v-if="fileList[0]" :src="fileList[0]"
+                  v-bind:style="{ width: 148+'px',height: 148+'px'}"/>
+            <img  v-if="fileList[1]" :src="fileList[1]"
+                  v-bind:style="{ width: 148+'px',height: 148+'px'}"/>
+            <img  v-if="fileList[2]" :src="fileList[2]"
+                  v-bind:style="{ width: 148+'px',height: 148+'px'}"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" align="center">
+            <el-button size="large" @click="changeCourseDialog = false" >
+              <span>确认</span>
+            </el-button>
+          </td>
+        </tr>
+      </table>
+    </el-dialog>
+  </section>
+</template>
+
+
+
+
+<script>
+  import { getClubActivity,setClubActivity,getClubUser,picBaseurl } from '../api/api';
+export default {
+  name: 'hello',
+  data () {
+    return {
+      reviewOptions: [{
+        value: '0',
+        label: '全部'
+      },{
+        value: '1',
+        label: '待审核'
+      }, {
+        value: '2',
+        label: '进行中'
+      }, {
+        value: '3',
+        label: '已驳回'
+      }, {
+        value: '4',
+        label: '已结束'
+      }],
+      selectTrainerOptions: [],
+      courseEndDatePickerOptions: {
+        disabledDate: (time) => {
+          let beginDateVal = this.setActivityForm.courseStartDate;
+          if (beginDateVal) {
+            return time.getTime() < beginDateVal;
+          }
+        }
+      },
+      tableData:[],
+      setActivityForm:{
+        activityId:'',
+        activityName:'',
+        activityLogo:'',
+        activityAuthor: '',
+        authorName:'',
+        activitySummary:'',
+        activityStartDate:'',
+        activityLocation:'',
+        activityEndDate:'',
+        activityImage:'',
+        mode:''
+      },
+      label:[],
+      pageNum:1,
+      pageSize:8,
+      total:0,
+      formInline: {
+        userName: '',
+      },
+      review:'0',
+      reviewDialog:'0',
+      changeReview: 0,
+      changeCourseDialog:false,
+      uploadURL:picBaseurl+"cmsClub!uploadPic.action?appPhaseII=Club",
+      uploadData:{"employeeId":JSON.parse(sessionStorage.getItem('employeeId'))},
+      setReviewValue:0,
+      courseShowImageCt:0,
+      fileList: []
+    }
+  },
+  methods: {
+    handleCurrentChange(val) {
+      this.currentRow = val;
+    },
+    reviewDateFormatter(row, column) {
+      var disp;
+        if(row.isReview === "0") {
+          disp = '未审核';
+        } else if(row.isReview === "1") {
+          var activityStartDate = row.activityStartDate.time;
+          var nowDate = new Date;
+          if(activityStartDate > nowDate.getTime()) {
+            disp = '进行中'
+          }else{
+            disp = '已结束'
+          }
+        } else if(row.isReview === "2") {
+          disp = '已驳回';
+        }
+      return disp;
+    },
+    createDateFormatter(row, column) {
+      var date = row.createDate;
+      return this.formatGetDate(date);
+    },
+    durationDateFormatter(row, column) {
+      var StartDate = this.formatGetDate(row.activityStartDate);
+      var EndDate = this.formatGetDate(row.activityEndDate);
+      return StartDate+'\n'+EndDate;
+    },
+    pageChange(val) {
+      this.tableData  = [];
+      this.pageNum = val;
+      let para = {
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        review:this.review
+      };
+      getClubActivity(para).then((res) => {
+        if(res.data.ret === 200) {
+          this.tableData = res.data.msg;
+          this.total = res.data.total;
+
+        } else if(res.data.ret === 400){
+          sessionStorage.removeItem('userName');
+          sessionStorage.removeItem('code');
+          _this.$router.push('/');
+        }
+      });
+    },
+    onSubmit() {
+      this.pageChange(1);
+    },
+    OpenChangeActivityDialog(index,mode) {
+      this.setActivityForm.activityId = this.tableData[index].activityId;
+      this.setActivityForm.mode = mode;
+        if(mode === '1') {
+          this.setActivity();
+        }else if(mode === '3') {
+          this.setActivity();
+        }else if(mode === '4') {
+          this.setActivityForm.courseId = this.tableData[index].courseId;
+          this.setActivityForm.mode = mode;
+          this.$confirm('是否删除此活动?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.setActivity();
+          }).catch(() => {
+
+          });
+        } else if(mode === '2') {
+          this.reviewDialog =this.tableData[index].isReview;
+          this.setActivityForm.activityName = this.tableData[index].activityName;
+          this.setActivityForm.activityLogo = picBaseurl+this.tableData[index].activityLogo;
+          this.label = this.tableData[index].activityLabel.split(",");
+          this.setActivityForm.activityAuthor = picBaseurl+this.tableData[index].activityAuthor;
+          this.setActivityForm.authorName = this.tableData[index].authorName;
+          this.setActivityForm.activityLocation =this.tableData[index].activityLocation;
+          this.setActivityForm.activitySummary = this.tableData[index].activitySummary;
+          this.setActivityForm.activityStartDate = this.formatGetDate(this.tableData[index].activityStartDate);
+          this.setActivityForm.activityEndDate = this.formatGetDate(this.tableData[index].activityEndDate);;
+          this.setActivityForm.activityImage = "";
+          this.fileList =[];
+          this.fileList = this.tableData[index].activityImage.split(",");
+          for(var x in this.fileList) {
+            if(this.fileList[x] !== '') {
+              this.fileList[x] = picBaseurl + this.fileList[x];
+            }
+          }
+          this.changeCourseDialog = true;
+        }
+    },
+    setActivity(){
+      setClubActivity(this.setActivityForm).then((res) => {
+        if(res.data.ret === 200) {
+          this.$message({
+            message: res.data.msg[0],
+            type: 'info'
+          });
+          this.changeCourseDialog = false;
+          this.pageChange(this.pageNum);
+        } else if(res.data.ret === 500){
+          this.$message({
+            message: res.data.msg[0],
+            type: 'error'
+          });
+        }
+      });
+    },
+    formatGetDate(date){
+      var formatValue;
+      if (isEmptyObject(date)) {
+        formatValue = "";
+      } else {
+        formatValue = (date.year+1900)
+          + "-" + dataLeftCompleting(date.month + 1)
+          + "-" + dataLeftCompleting(date.date)
+          + " " + dataLeftCompleting(date.hours)
+          + ":" + dataLeftCompleting(date.minutes)
+          + ":" + dataLeftCompleting(date.seconds);
+      }
+      return formatValue;
+    },
+    uploadCoursePicSuccess(res, file){
+      this.setActivityForm.courseLogo =  picBaseurl+res.msg[0];
+      file.url = this.setActivityForm.courseLogo;
+    },
+    uploadCourseShowImageSuccess(res, file,fileList){
+      file.url = picBaseurl+res.msg[0];
+      this.fileList = fileList;
+    },
+    beforeCourseShowImageUpload(file){
+      if(this.fileList.length === 3) {
+        this.$message({
+          message: "上传图片不能超过3张",
+          type: 'error'
+        });
+          return false;
+      }
+    },
+    uploadCourseShowImageRemove(file, fileList){
+      this.fileList = fileList;
+    },
+    getCourseTrainer(){
+      let para = {
+        pageNum:1,
+        pageSize: 1000,
+        userRole:1,
+        review:0
+      };
+      getClubUser(para).then((res) => {
+        if(res.data.ret === 200) {
+          console.log(res.data.msg);
+          var msg = res.data.msg;
+          this.selectTrainerOptions = [];
+          for(var i=0;i<msg.length;i++) {
+            if(msg[i].clubRole === 1) {
+              this.selectTrainerOptions.push({value:msg[i].userId,label:msg[i].userName});
+            }
+          }
+        } else if(res.data.ret === 500){
+          this.$message({
+            message: '教练信息获取失败',
+            type: 'error'
+          });
+        }
+      });
+    }
+  },
+  mounted() {
+    let para = {
+      pageNum: this.pageNum,
+      pageSize: this.pageSize,
+      review:'0'
+    };
+    getClubActivity(para).then((res) => {
+      if(res.data.ret === 200) {
+        this.tableData = res.data.msg;
+        this.total = res.data.total;
+      } else if(res.data.ret === 500){
+        this.$message({
+          message: res.data.msg[0],
+          type: 'error'
+        });
+      }
+    });
+  }
+}
+
+  function dataLeftCompleting(value){
+    return parseInt(value) < 10 ? "0" + value : value;
+  }
+
+  function isEmptyObject(obj) {
+    for (var i in obj) {
+      return false
+    }
+    return true
+  }
+
+</script>
+<style>
+  .avatar-uploader2 .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader2 .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .el-upload-list--picture-card .el-upload-list__item  {
+    width: 108px;
+    height: 108px;
+  }
+  .el-upload el-upload--picture-card {
+    font-size: 28px;
+    color: #8c939d;
+    width: 108px;
+    height: 108px;
+    line-height: 178px;
+    text-align: center;
+  }
+</style>
+
+
+
