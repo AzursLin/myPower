@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hctek.dao.UserDormMapper" >
+  <resultMap id="BaseResultMap" type="com.hctek.model.UserDorm" >
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="dorm" property="dorm" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="college" property="college" jdbcType="VARCHAR" />
+    <result column="class_info" property="classInfo" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="user_nickname" property="userNickname" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="getAll" resultMap="BaseResultMap" parameterType="com.hctek.model.UserDorm" >
+    select *
+    from user_dorm ud LEFT JOIN user u ON ud.user_id = u.user_id
+    <where>
+      <if test="userNickname != null and userNickname != ''">
+        AND u.user_nickname = #{userNickname}
+      </if>
+      <if test="userId != null and userId != ''">
+        AND ud.user_id = #{userId}
+      </if>
+      <if test="dorm != null and dorm != ''">
+        AND ud.dorm = #{dorm}
+      </if>
+      <if test="userName != null and userName != ''">
+        AND ud.user_name = #{userName}
+      </if>
+      <if test="college != null and college != ''">
+        AND ud.college = #{college}
+      </if>
+      <if test="classInfo != null and classInfo != ''">
+        AND ud.class_info = #{classInfo}
+      </if>
+    </where>
+  </select>
+
+  <update id="updateById" parameterType="com.hctek.model.UserDorm" >
+    update user_dorm
+    <set >
+      <if test="userId != null and userId != ''" >
+        user_id = #{userId},
+      </if>
+      <if test="dorm != null and dorm != ''" >
+        dorm = #{dorm},
+      </if>
+      <if test="userName != null and userName != ''" >
+        user_name = #{userName},
+      </if>
+      <if test="college != null and college != ''" >
+        college = #{college},
+      </if>
+      <if test="classInfo != null and classInfo != ''" >
+        class_info = #{classInfo},
+      </if>
+      <if test="updateDate != null and updateDate != ''" >
+        update_date = #{updateDate},
+      </if>
+    </set>
+    where id = #{id}
+  </update>
+
+  <insert id="insert" parameterType="com.hctek.model.UserDorm" >
+    insert into user_dorm (user_id, dorm, user_name, 
+      college, class_info, update_date
+      )
+    values (#{userId,jdbcType=VARCHAR}, #{dorm,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR},
+      #{college,jdbcType=VARCHAR}, #{classInfo,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.hctek.model.UserDorm" >
+    insert into user_dorm
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="dorm != null" >
+        dorm,
+      </if>
+      <if test="userName != null" >
+        user_name,
+      </if>
+      <if test="college != null" >
+        college,
+      </if>
+      <if test="classInfo != null" >
+        class_info,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="userId != null" >
+        #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="dorm != null" >
+        #{dorm,jdbcType=INTEGER},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="college != null" >
+        #{college,jdbcType=VARCHAR},
+      </if>
+      <if test="classInfo != null" >
+        #{classInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+</mapper>
